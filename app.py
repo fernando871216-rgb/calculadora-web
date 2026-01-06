@@ -22,6 +22,8 @@ def interes_compuesto_tabla(capital, mensual, tasa_anual, años):
 def index():
     resultado = None
     tabla = []
+    tabla_visible = []
+    es_pro = False   # por ahora todos son gratis
 
     if request.method == "POST":
         capital = float(request.form["capital"])
@@ -33,10 +35,14 @@ def index():
             capital, mensual, tasa, años
         )
 
+        # 🔒 LÍMITE GRATIS: solo 5 años
+        tabla_visible = tabla[:5]
+
     return render_template(
         "index.html",
         resultado=resultado,
-        tabla=tabla
+        tabla=tabla_visible,
+        es_pro=es_pro
     )
 
 if __name__ == "__main__":
