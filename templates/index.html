@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Calculadora de Interés Compuesto</title>
+</head>
+<body>
+    <h1>Calculadora de Interés Compuesto</h1>
+
+    <form method="post">
+        <label>Capital inicial:</label><br>
+        <input type="number" name="capital" required><br><br>
+
+        <label>Aportación mensual:</label><br>
+        <input type="number" name="mensual" required><br><br>
+
+        <label>Tasa anual (%):</label><br>
+        <input type="number" step="0.1" name="tasa" required><br><br>
+
+        <label>Años:</label><br>
+        <input type="number" name="años" required><br><br>
+
+        <button type="submit">Calcular</button>
+    </form>
+
+    {% if resultado %}
+        <h2>Resultado final: ${{ resultado }}</h2>
+    {% endif %}
+</body>
+</html>
