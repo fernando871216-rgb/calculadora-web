@@ -232,8 +232,8 @@ def index():
     resultado = None
     tabla = []
     tabla_visible = []
+    tabla_cetes = []
     es_pro = session.get("es_pro", False)
-
 
     if request.method == "POST":
         capital = float(request.form["capital"])
@@ -247,20 +247,24 @@ def index():
 
         # 🔒 LÍMITE GRATIS: solo 5 años
         tabla_visible = tabla[:5]
-        
-        total_cetes, tabla_cetes = inversion_cetes(capital, TASA_CETES, años)
 
-if not es_pro:
-    tabla_cetes = tabla_cetes[:5]
+        # CETES
+        total_cetes, tabla_cetes = inversion_cetes(
+            capital, TASA_CETES, años
+        )
 
-   return render_template(
-    "index.html",
-    resultado=resultado,
-    tabla=tabla_visible,
-    tabla_cetes=tabla_cetes,
-    tasa_cetes=TASA_CETES,
-    es_pro=es_pro
-)
+        if not es_pro:
+            tabla_cetes = tabla_cetes[:5]
+
+    return render_template(
+        "index.html",
+        resultado=resultado,
+        tabla=tabla_visible,
+        tabla_cetes=tabla_cetes,
+        tasa_cetes=TASA_CETES,
+        es_pro=es_pro
+    )
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
