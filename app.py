@@ -27,13 +27,17 @@ def interes_compuesto_tabla(capital, mensual, tasa, años):
 
 @app.route("/pdf")
 def generar_pdf():
-    # ⚠️ datos de ejemplo (luego los haremos dinámicos)
+    es_pro = False  # luego vendrá del pago
+
     capital = 10000
     mensual = 1000
     tasa = 10
     años = 10
 
     _, tabla = interes_compuesto_tabla(capital, mensual, tasa, años)
+
+    if not es_pro:
+        tabla = tabla[:5]  # 🔒 límite gratis
 
     buffer = io.BytesIO()
     pdf = canvas.Canvas(buffer, pagesize=letter)
@@ -46,14 +50,22 @@ def generar_pdf():
     y = height - 100
 
     for fila in tabla:
-        texto = f"${fila['total']:,.2f}"
-        pdf.drawString(50, y, texto)
+        pdf.drawString(
+            50,
+            y,
+            f"Año {fila['año']}: ${fila['total']:,.2f}"
+        )
         y -= 15
 
         if y < 50:
             pdf.showPage()
             pdf.setFont("Helvetica", 10)
             y = height - 50
+
+    if not es_pro:
+        pdf.showPage()
+        pdf.setFont("Helvetica-Bold", 14)
+        pdf.drawString(50, height - 100, "🔒 Desbloquea la versión PRO para ver el resto")
 
     pdf.save()
     buffer.seek(0)
