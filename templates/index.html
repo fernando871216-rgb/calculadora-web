@@ -44,6 +44,29 @@
     </table>
 {% endif %}
 
+<h2>🇲🇽 Comparación con CETES</h2>
+<p>Tasa anual CETES usada: {{ tasa_cetes }}%</p>
+
+<table border="1">
+    <tr>
+        <th>Año</th>
+        <th>Monto en CETES</th>
+    </tr>
+    {% for fila in tabla_cetes %}
+    <tr>
+        <td>{{ fila.año }}</td>
+        <td>${{ "{:,.2f}".format(fila.total) }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+{% if not es_pro %}
+<p style="color:red;">
+    🔒 Comparación completa disponible en versión PRO
+</p>
+{% endif %}
+
+
 <a href="/pdf">
     <button>📄 Descargar PDF</button>
 </a>
