@@ -1,4 +1,7 @@
 from flask import Flask, render_template, request, redirect
+from reportlab.pdfgen import canvas
+from flask import send_file
+import io
 import os
 import mercadopago
 
@@ -13,7 +16,7 @@ def pagar():
             {
                 "title": "Versión PRO - Calculadora de Inversión",
                 "quantity": 1,
-                "unit_price": 99.0
+                "unit_price": 45.0
             }
         ],
         "back_urls": {
