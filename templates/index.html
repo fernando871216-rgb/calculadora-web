@@ -28,3 +28,18 @@
     {% endif %}
 </body>
 </html>
+{% if tabla %}
+    <h2>Crecimiento año por año</h2>
+    <table border="1" cellpadding="8">
+        <tr>
+            <th>Año</th>
+            <th>Capital acumulado</th>
+        </tr>
+        {% for fila in tabla %}
+        <tr>
+            <td>{{ fila.año }}</td>
+            <td>${{ fila.total }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+{% endif %}
