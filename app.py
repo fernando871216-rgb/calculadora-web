@@ -9,6 +9,46 @@ app = Flask(__name__)
 
 sdk = mercadopago.SDK(os.getenv("MP_ACCESS_TOKEN"))
 
+@app.route("/pdf")
+def generar_pdf():
+    # ⚠️ datos de ejemplo (luego los haremos dinámicos)
+    capital = 10000
+    mensual = 1000
+    tasa = 10
+    años = 10
+
+    _, tabla = interes_compuesto_tabla(capital, mensual, tasa, años)
+
+    buffer = io.BytesIO()
+    pdf = canvas.Canvas(buffer, pagesize=letter)
+    width, height = letter
+
+    pdf.setFont("Helvetica-Bold", 16)
+    pdf.drawString(50, height - 50, "Simulación de Inversión")
+
+    pdf.setFont("Helvetica", 10)
+    y = height - 100
+
+    for fila in tabla:
+        texto = f"Año {fila['año']}: ${fila['total']:,.2f}"
+        pdf.drawString(50, y, texto)
+        y -= 15
+
+        if y < 50:
+            pdf.showPage()
+            pdf.setFont("Helvetica", 10)
+            y = height - 50
+
+    pdf.save()
+    buffer.seek(0)
+
+    return send_file(
+        buffer,
+        as_attachment=True,
+        download_name="simulacion_inversion.pdf",
+        mimetype="application/pdf"
+    )
+
 @app.route("/pagar")
 def pagar():
     preference_data = {
