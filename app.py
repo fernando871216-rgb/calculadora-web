@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect
 from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
 from flask import send_file
 import io
 import os
@@ -8,6 +9,21 @@ import mercadopago
 app = Flask(__name__)
 
 sdk = mercadopago.SDK(os.getenv("MP_ACCESS_TOKEN"))
+
+def interes_compuesto_tabla(capital, mensual, tasa, años):
+    tabla = []
+    total = capital
+    tasa = tasa / 100
+
+    for año in range(1, años + 1):
+        total += mensual * 12
+        total *= (1 + tasa)
+        tabla.append({
+            "año": año,
+            "total": total
+        })
+
+    return total, tabla
 
 @app.route("/pdf")
 def generar_pdf():
@@ -30,7 +46,7 @@ def generar_pdf():
     y = height - 100
 
     for fila in tabla:
-        texto = f"Año {fila['año']}: ${fila['total']:,.2f}"
+        texto = f"${fila['total']:,.2f}"
         pdf.drawString(50, y, texto)
         y -= 15
 
@@ -82,20 +98,7 @@ def fallo():
 def pendiente():
     return "⏳ Pago pendiente."
 
-def interes_compuesto_tabla(capital, mensual, tasa_anual, años):
-    tasa_mensual = tasa_anual / 12 / 100
-    total = capital
-    tabla = []
 
-    for año in range(1, años + 1):
-        for _ in range(12):
-            total = total * (1 + tasa_mensual) + mensual
-        tabla.append({
-            "año": año,
-            "total": round(total, 2)
-        })
-
-    return round(total, 2), tabla
 
 @app.route("/", methods=["GET", "POST"])
 def index():
