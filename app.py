@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect
 import os
 import mercadopago
 
@@ -26,6 +26,7 @@ def pagar():
 
     preference = sdk.preference().create(preference_data)
     return redirect(preference["response"]["init_point"])
+
 @app.route("/exito")
 def exito():
     return "✅ Pago aprobado. Aquí activaremos PRO."
