@@ -43,8 +43,12 @@
         {% endfor %}
     </table>
 {% endif %}
+
 {% if not es_pro and tabla|length >= 5 %}
     <p style="color:red;">
         🔒 Los años restantes están disponibles en la versión PRO
+        <a href="/pagar">
+    <button>💳 Desbloquear versión PRO</button>
+</a>
     </p>
 {% endif %}

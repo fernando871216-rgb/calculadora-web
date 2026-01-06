@@ -1,7 +1,42 @@
 from flask import Flask, render_template, request
 import os
+import mercadopago
 
 app = Flask(__name__)
+
+sdk = mercadopago.SDK(os.getenv("MP_ACCESS_TOKEN"))
+
+@app.route("/pagar")
+def pagar():
+    preference_data = {
+        "items": [
+            {
+                "title": "Versión PRO - Calculadora de Inversión",
+                "quantity": 1,
+                "unit_price": 99.0
+            }
+        ],
+        "back_urls": {
+            "success": "/exito",
+            "failure": "/fallo",
+            "pending": "/pendiente"
+        },
+        "auto_return": "approved"
+    }
+
+    preference = sdk.preference().create(preference_data)
+    return redirect(preference["response"]["init_point"])
+@app.route("/exito")
+def exito():
+    return "✅ Pago aprobado. Aquí activaremos PRO."
+
+@app.route("/fallo")
+def fallo():
+    return "❌ Pago cancelado."
+
+@app.route("/pendiente")
+def pendiente():
+    return "⏳ Pago pendiente."
 
 def interes_compuesto_tabla(capital, mensual, tasa_anual, años):
     tasa_mensual = tasa_anual / 12 / 100
