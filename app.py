@@ -1,51 +1,84 @@
-from flask import Flask, render_template, request, redirect
-from reportlab.pdfgen import canvas
-from flask import session
-from reportlab.lib.pagesizes import letter
-from flask import send_file
+from flask import Flask, render_template, request, session, send_file, redirect
 import io
-import os
-import mercadopago
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
 
-app.secret_key = "INIFER"
+# =====================
+# CREAR APP
+# =====================
 app = Flask(__name__)
+app.secret_key = "INIFER"  # Cambia a algo más seguro en producción
 
-TASA_CETES = 10.0  # % anual, editable
+# =====================
+# CONSTANTES
+# =====================
+TASA_CETES = 10.0  # % anual
 
-sdk = mercadopago.SDK(os.getenv("MP_ACCESS_TOKEN"))
-
-
+# =====================
+# FUNCIONES
+# =====================
+def inversion_cetes(capital, tasa, años):
+    tabla = []
+    total = capital
+    tasa = tasa / 100
+    for año in range(1, años + 1):
+        total *= (1 + tasa)
+        tabla.append({"año": año, "total": total})
+    return total, tabla
 
 def interes_compuesto_tabla(capital, mensual, tasa, años):
     tabla = []
     total = capital
     tasa = tasa / 100
-
     for año in range(1, años + 1):
-        total += mensual * 12
-        total *= (1 + tasa)
-        tabla.append({
-            "año": año,
-            "total": total
-        })
-
+        total = total*(1 + tasa) + mensual*12
+        tabla.append({"año": año, "total": total})
     return total, tabla
 
-def inversion_cetes(capital, tasa, años):
+# =====================
+# RUTA PRINCIPAL
+# =====================
+@app.route("/", methods=["GET", "POST"])
+def index():
+    resultado = None
     tabla = []
-    total = capital
-    tasa = tasa / 100
+    tabla_visible = []
+    tabla_cetes = []
+    es_pro = session.get("es_pro", False)
 
-    for año in range(1, años + 1):
-        total *= (1 + tasa)
-        tabla.append({
-            "año": año,
-            "total": total
-        })
+    if request.method == "POST":
+        capital = float(request.form["capital"])
+        mensual = float(request.form["mensual"])
+        tasa = float(request.form["tasa"])
+        años = int(request.form["años"])
 
-    return total, tabla
+        resultado, tabla = interes_compuesto_tabla(
+            capital, mensual, tasa, años
+        )
 
+        # 🔒 LÍMITE GRATIS: solo 5 años
+        tabla_visible = tabla[:5]
 
+        # CETES
+        total_cetes, tabla_cetes = inversion_cetes(
+            capital, TASA_CETES, años
+        )
+
+        if not es_pro:
+            tabla_cetes = tabla_cetes[:5]
+
+    return render_template(
+        "index.html",
+        resultado=resultado,
+        tabla=tabla_visible,
+        tabla_cetes=tabla_cetes,
+        tasa_cetes=TASA_CETES,
+        es_pro=es_pro
+    )
+
+# =====================
+# RUTA PDF
+# =====================
 @app.route("/pdf")
 def generar_pdf():
     es_pro = session.get("es_pro", False)
@@ -184,88 +217,8 @@ def generar_pdf():
         mimetype="application/pdf"
     )
 
-
-@app.route("/pagar")
-def pagar():
-    preference_data = {
-        "items": [
-            {
-                "title": "Versión PRO - Calculadora de Inversión",
-                "quantity": 1,
-                "unit_price": 45.0
-            }
-        ],
-        "back_urls": {
-            "success": "/exito",
-            "failure": "/fallo",
-            "pending": "/pendiente"
-        },
-        "auto_return": "approved"
-    }
-
-    preference = sdk.preference().create(preference_data)
-    return redirect(preference["response"]["init_point"])
-
-@app.route("/exito")
-def exito():
-    status = request.args.get("status")
-
-    if status == "approved":
-        session["es_pro"] = True
-        return redirect("/")
-
-    return "Pago no aprobado"
-
-
-@app.route("/fallo")
-def fallo():
-    return "❌ Pago cancelado."
-
-@app.route("/pendiente")
-def pendiente():
-    return "⏳ Pago pendiente."
-
-
-
-@app.route("/", methods=["GET", "POST"])
-def index():
-    resultado = None
-    tabla = []
-    tabla_visible = []
-    tabla_cetes = []
-    es_pro = session.get("es_pro", False)
-
-    if request.method == "POST":
-        capital = float(request.form["capital"])
-        mensual = float(request.form["mensual"])
-        tasa = float(request.form["tasa"])
-        años = int(request.form["años"])
-
-        resultado, tabla = interes_compuesto_tabla(
-            capital, mensual, tasa, años
-        )
-
-        # 🔒 LÍMITE GRATIS: solo 5 años
-        tabla_visible = tabla[:5]
-
-        # CETES
-        total_cetes, tabla_cetes = inversion_cetes(
-            capital, TASA_CETES, años
-        )
-
-        if not es_pro:
-            tabla_cetes = tabla_cetes[:5]
-
-    return render_template(
-        "index.html",
-        resultado=resultado,
-        tabla=tabla_visible,
-        tabla_cetes=tabla_cetes,
-        tasa_cetes=TASA_CETES,
-        es_pro=es_pro
-    )
-
-
+# =====================
+# RUN LOCAL
+# =====================
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(debug=True)
